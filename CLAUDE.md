@@ -31,13 +31,16 @@ Key packages (installed in .venv):
 - `scipy` - WAV file handling
 - `numpy` - Audio data processing
 - `torch` - Whisper backend
+- `pystray` - System tray icon
+- `pillow` - Icon image generation
 
 ## Architecture
 
 Single-file application ([hotkey_whisper.py](hotkey_whisper.py)):
 
-- **Configuration** (lines 13-17): Model name, sample rate, hotkeys
-- **Background mode detection** (line 21): Auto-detects if running with pythonw.exe
+- **Configuration** (lines 15-18): Model name, sample rate, hotkeys
+- **Background mode detection** (line 23): Auto-detects if running with pythonw.exe
+- **System tray icon** (lines 39-84): Color-coded status indicator with click-to-record
 - **Audio recording**: Uses `sounddevice.InputStream` with callback pattern, stores chunks in `audio_buffer`
 - **Transcription**: Writes audio to temp WAV file, calls Whisper's `transcribe()`, copies result to clipboard
 - **Hotkey handling**: `keyboard` library binds Ctrl+Space (record toggle) and ESC (exit)
@@ -54,10 +57,17 @@ EXIT_KEY = "esc"        # Exit application
 ## Usage Pattern
 
 1. Script loads Whisper model on startup (takes several seconds)
-2. Hold Ctrl+Space to start recording
-3. Release to stop recording and trigger transcription
-4. Transcribed text is printed and copied to clipboard
-5. Press ESC to exit cleanly
+2. System tray icon appears (green = ready)
+3. Hold Ctrl+Space OR click tray icon to start recording (icon turns red)
+4. Release to stop recording and trigger transcription (icon turns orange)
+5. Transcribed text is copied to clipboard, icon returns to green
+6. Press ESC or right-click tray → Quit to exit
+
+**Tray Icon Colors:**
+- Gray: Loading model
+- Green: Ready
+- Red: Recording
+- Orange: Transcribing
 
 ## Project Goal
 
@@ -72,12 +82,13 @@ Create a lightweight, local, always-ready speech-to-text assistant ("SuperWhispe
 - Virtual environment with all dependencies
 - FFmpeg installed and working
 - Background/silent execution via `start_silent.bat`
+- System tray icon with status colors and click-to-record
 
 **Roadmap:**
 1. ~~Basic recording + transcription~~ (done)
 2. ~~Clipboard integration~~ (done)
 3. ~~Graceful exit~~ (done)
 4. ~~Background/silent execution~~ (done) - `start_silent.bat` uses pythonw.exe
-5. **Next: System tray icon** with quit/status
-6. Standalone packaging (PyInstaller) or global dependency install
+5. ~~System tray icon~~ (done) - color status, click to record, right-click to quit
+6. **Next: Standalone packaging** (PyInstaller) or global dependency install
 7. Optional: Pre-roll listening, latency optimizations, logging

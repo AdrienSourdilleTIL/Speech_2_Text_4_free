@@ -9,6 +9,8 @@ import tempfile
 import scipy.io.wavfile as wavfile
 import pyperclip
 import os
+from PIL import Image, ImageDraw
+import pystray
 
 # ---------------- CONFIG ----------------
 MODEL_NAME = "medium"   # step 2: better accuracy
@@ -30,7 +32,56 @@ model = whisper.load_model(MODEL_NAME)
 
 running = True
 recording = False
+transcribing = False
 audio_buffer = []
+tray_icon = None
+
+# ---------------- TRAY ICON ----------------
+def create_icon(color):
+    """Create a simple colored circle icon."""
+    size = 64
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse([4, 4, size-4, size-4], fill=color)
+    return image
+
+def update_tray_icon(status):
+    """Update tray icon based on status."""
+    global tray_icon
+    if tray_icon is None:
+        return
+
+    colors = {
+        'loading': (128, 128, 128),   # Gray - loading
+        'ready': (0, 200, 0),         # Green - ready
+        'recording': (255, 0, 0),     # Red - recording
+        'transcribing': (255, 165, 0) # Orange - transcribing
+    }
+
+    tooltips = {
+        'loading': 'Speech2Text - Loading...',
+        'ready': 'Speech2Text - Ready (Ctrl+Space or click)',
+        'recording': 'Speech2Text - Recording...',
+        'transcribing': 'Speech2Text - Transcribing...'
+    }
+
+    tray_icon.icon = create_icon(colors.get(status, (128, 128, 128)))
+    tray_icon.title = tooltips.get(status, 'Speech2Text')
+
+def on_tray_click(icon, item):
+    """Handle tray icon click - toggle recording."""
+    global recording
+    if transcribing:
+        return  # Don't start recording while transcribing
+
+    if recording:
+        recording = False
+    else:
+        on_hotkey_press()
+
+def on_tray_quit(icon, item):
+    """Handle quit from tray menu."""
+    exit_program()
 
 
 def audio_callback(indata, frames, time_info, status):
@@ -43,6 +94,7 @@ def record_audio():
 
     audio_buffer = []
     recording = True
+    update_tray_icon('recording')
     log("Recording... Speak now!")
 
     with sd.InputStream(
@@ -58,9 +110,15 @@ def record_audio():
 
 
 def process_audio():
+    global transcribing
+
     if not audio_buffer:
         log("No audio captured.")
+        update_tray_icon('ready')
         return
+
+    transcribing = True
+    update_tray_icon('transcribing')
 
     audio = np.concatenate(audio_buffer, axis=0)
 
@@ -80,6 +138,9 @@ def process_audio():
     log(text)
     log("-" * 40)
 
+    transcribing = False
+    update_tray_icon('ready')
+
 
 def on_hotkey_press():
     if not recording and running:
@@ -92,10 +153,12 @@ def on_hotkey_release():
 
 
 def exit_program():
-    global running, recording
+    global running, recording, tray_icon
     log("\nExiting cleanly...")
     running = False
     recording = False
+    if tray_icon:
+        tray_icon.stop()
     time.sleep(0.2)
     sys.exit(0)
 
@@ -109,6 +172,29 @@ keyboard.on_press_key(EXIT_KEY, lambda e: exit_program())
 log("Hold Ctrl+Space to speak. Release to transcribe.")
 log("Press ESC to exit.")
 
-# ---------------- MAIN LOOP ----------------
-while running:
-    time.sleep(0.1)
+# ---------------- TRAY ICON SETUP ----------------
+def setup_tray():
+    global tray_icon
+
+    menu = pystray.Menu(
+        pystray.MenuItem("Quit", on_tray_quit)
+    )
+
+    tray_icon = pystray.Icon(
+        "Speech2Text",
+        create_icon((0, 200, 0)),  # Start green (ready)
+        "Speech2Text - Ready",
+        menu
+    )
+
+    # Left-click to toggle recording
+    tray_icon.default_action = on_tray_click
+
+    return tray_icon
+
+# ---------------- MAIN ----------------
+update_tray_icon('ready')
+log("System tray icon active. Click to record, right-click for menu.")
+
+icon = setup_tray()
+icon.run()

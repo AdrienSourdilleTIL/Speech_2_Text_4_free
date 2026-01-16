@@ -9,7 +9,8 @@ A lightweight, local speech-to-text assistant using OpenAI's Whisper model. Hold
 - **Clipboard integration**: Transcribed text is automatically copied
 - **Local processing**: All transcription happens on your machine
 - **Background mode**: Run silently without a terminal window
-- **Graceful exit**: Press ESC to quit
+- **System tray icon**: Visual status indicator with click-to-record
+- **Graceful exit**: Press ESC or right-click tray → Quit
 
 ## Requirements
 
@@ -29,7 +30,7 @@ python -m venv .venv
 .venv\Scripts\activate
 
 # Install dependencies
-pip install openai-whisper sounddevice keyboard pyperclip scipy numpy
+pip install openai-whisper sounddevice keyboard pyperclip scipy numpy pystray pillow
 ```
 
 ## Usage
@@ -44,13 +45,17 @@ python hotkey_whisper.py
 Double-click `start_silent.bat` or run it from command line.
 
 ### Controls
-1. Wait for the Whisper model to load
-2. Hold **Ctrl+Space** and speak
-3. Release to transcribe
-4. Text is copied to clipboard - paste anywhere with Ctrl+V
-5. Press **ESC** to exit
+1. Wait for the Whisper model to load (tray icon appears green when ready)
+2. Hold **Ctrl+Space** OR **click the tray icon** to start recording (icon turns red)
+3. Release to transcribe (icon turns orange)
+4. Text is copied to clipboard - paste anywhere with Ctrl+V (icon returns to green)
+5. Press **ESC** or right-click tray icon → **Quit** to exit
 
-To stop the background process, press ESC or use Task Manager.
+### Tray Icon Colors
+- **Gray**: Loading model
+- **Green**: Ready
+- **Red**: Recording
+- **Orange**: Transcribing
 
 ## Configuration
 
