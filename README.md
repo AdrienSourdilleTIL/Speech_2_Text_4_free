@@ -10,7 +10,8 @@ A lightweight, local speech-to-text assistant using OpenAI's Whisper model. Hold
 - **Local processing**: All transcription happens on your machine
 - **Background mode**: Run silently without a terminal window
 - **System tray icon**: Visual status indicator with click-to-record
-- **Graceful exit**: Press ESC or right-click tray → Quit
+- **Audio feedback**: Sound cues for recording start, stop, and completion
+- **Graceful exit**: Press Ctrl+Shift+ESC or right-click tray → Quit
 
 ## Requirements
 
@@ -49,7 +50,7 @@ Double-click `start_silent.bat` or run it from command line.
 2. Hold **Ctrl+Space** OR **click the tray icon** to start recording (icon turns red)
 3. Release to transcribe (icon turns orange)
 4. Text is copied to clipboard - paste anywhere with Ctrl+V (icon returns to green)
-5. Press **ESC** or right-click tray icon → **Quit** to exit
+5. Press **Ctrl+Shift+ESC** or right-click tray icon → **Quit** to exit
 
 ### Tray Icon Colors
 - **Gray**: Loading model
@@ -65,7 +66,8 @@ Edit the config section in `hotkey_whisper.py`:
 MODEL_NAME = "medium"   # tiny, base, small, medium, large
 SAMPLE_RATE = 16000     # Audio sample rate
 HOTKEY = "ctrl+space"   # Record hotkey
-EXIT_KEY = "esc"        # Exit hotkey
+EXIT_KEY = "ctrl+shift+esc"  # Exit hotkey
+SOUND_ENABLED = True    # Enable/disable audio feedback
 ```
 
 ## License

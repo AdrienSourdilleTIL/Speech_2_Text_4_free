@@ -38,9 +38,10 @@ Key packages (installed in .venv):
 
 Single-file application ([hotkey_whisper.py](hotkey_whisper.py)):
 
-- **Configuration** (lines 15-18): Model name, sample rate, hotkeys
+- **Configuration** (lines 15-20): Model name, sample rate, hotkeys, sound toggle
 - **Background mode detection** (line 23): Auto-detects if running with pythonw.exe
-- **System tray icon** (lines 39-84): Color-coded status indicator with click-to-record
+- **Sound feedback** (lines 31-71): Generated tones for recording start/stop, success, error
+- **System tray icon** (lines 82-127): Color-coded status indicator with click-to-record
 - **Audio recording**: Uses `sounddevice.InputStream` with callback pattern, stores chunks in `audio_buffer`
 - **Transcription**: Writes audio to temp WAV file, calls Whisper's `transcribe()`, copies result to clipboard
 - **Hotkey handling**: `keyboard` library binds Ctrl+Space (record toggle) and ESC (exit)
@@ -51,7 +52,8 @@ Single-file application ([hotkey_whisper.py](hotkey_whisper.py)):
 MODEL_NAME = "medium"   # Whisper model size (tiny, base, small, medium, large)
 SAMPLE_RATE = 16000     # Audio sample rate in Hz
 HOTKEY = "ctrl+space"   # Hold to record
-EXIT_KEY = "esc"        # Exit application
+EXIT_KEY = "ctrl+shift+esc"  # Exit application
+SOUND_ENABLED = True    # Enable/disable audio feedback
 ```
 
 ## Usage Pattern
@@ -61,13 +63,19 @@ EXIT_KEY = "esc"        # Exit application
 3. Hold Ctrl+Space OR click tray icon to start recording (icon turns red)
 4. Release to stop recording and trigger transcription (icon turns orange)
 5. Transcribed text is copied to clipboard, icon returns to green
-6. Press ESC or right-click tray → Quit to exit
+6. Press Ctrl+Shift+ESC or right-click tray → Quit to exit
 
 **Tray Icon Colors:**
 - Gray: Loading model
 - Green: Ready
 - Red: Recording
 - Orange: Transcribing
+
+**Sound Feedback:**
+- Recording start: Rising tone
+- Recording stop: Falling tone
+- Transcription complete: Two-tone chime
+- Error: Low buzz
 
 ## Project Goal
 
@@ -78,11 +86,12 @@ Create a lightweight, local, always-ready speech-to-text assistant ("SuperWhispe
 **Completed:**
 - Ctrl+Space hold-to-record, release-to-transcribe
 - Clipboard auto-copy of transcribed text
-- ESC graceful exit
+- Ctrl+Shift+ESC graceful exit
 - Virtual environment with all dependencies
 - FFmpeg installed and working
 - Background/silent execution via `start_silent.bat`
 - System tray icon with status colors and click-to-record
+- Audio feedback (sound cues for recording/transcription states)
 
 **Roadmap:**
 1. ~~Basic recording + transcription~~ (done)

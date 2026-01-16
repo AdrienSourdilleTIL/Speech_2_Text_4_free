@@ -11,12 +11,14 @@ import pyperclip
 import os
 from PIL import Image, ImageDraw
 import pystray
+import winsound
 
 # ---------------- CONFIG ----------------
 MODEL_NAME = "medium"   # step 2: better accuracy
 SAMPLE_RATE = 16000
 HOTKEY = "ctrl+space"
-EXIT_KEY = "esc"
+EXIT_KEY = "ctrl+shift+esc"
+SOUND_ENABLED = True    # Enable/disable audio feedback
 # ----------------------------------------
 
 # Detect if running in background mode (no console)
@@ -26,6 +28,40 @@ def log(message):
     """Print only if console is available."""
     if not BACKGROUND_MODE:
         print(message)
+
+# ---------------- SOUND FEEDBACK ----------------
+SOUND_SAMPLE_RATE = 44100
+
+def generate_tone(frequency, duration, volume=0.3):
+    """Generate a simple sine wave tone."""
+    t = np.linspace(0, duration, int(SOUND_SAMPLE_RATE * duration), False)
+    tone = np.sin(2 * np.pi * frequency * t) * volume
+    # Apply fade in/out to avoid clicks
+    fade_samples = int(SOUND_SAMPLE_RATE * 0.01)
+    tone[:fade_samples] *= np.linspace(0, 1, fade_samples)
+    tone[-fade_samples:] *= np.linspace(1, 0, fade_samples)
+    return tone.astype(np.float32)
+
+def play_sound(sound_type):
+    """Play a sound based on type. Uses Windows system sounds."""
+    if not SOUND_ENABLED:
+        return
+
+    try:
+        if sound_type == 'recording_start':
+            # Device connect sound
+            winsound.PlaySound("DeviceConnect", winsound.SND_ALIAS | winsound.SND_ASYNC)
+        elif sound_type == 'recording_stop':
+            # Device disconnect sound
+            winsound.PlaySound("DeviceDisconnect", winsound.SND_ALIAS | winsound.SND_ASYNC)
+        elif sound_type == 'transcription_complete':
+            # Notification sound (pleasant chime)
+            winsound.PlaySound("Notification.Default", winsound.SND_ALIAS | winsound.SND_ASYNC)
+        elif sound_type == 'error':
+            # System exclamation
+            winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS | winsound.SND_ASYNC)
+    except Exception:
+        pass  # Silently fail if sound doesn't work
 
 log("Loading Whisper model...")
 model = whisper.load_model(MODEL_NAME)
@@ -95,6 +131,7 @@ def record_audio():
     audio_buffer = []
     recording = True
     update_tray_icon('recording')
+    play_sound('recording_start')
     log("Recording... Speak now!")
 
     with sd.InputStream(
@@ -105,6 +142,7 @@ def record_audio():
         while recording and running:
             time.sleep(0.05)
 
+    play_sound('recording_stop')
     log("Recording stopped. Transcribing...")
     process_audio()
 
@@ -114,32 +152,39 @@ def process_audio():
 
     if not audio_buffer:
         log("No audio captured.")
+        play_sound('error')
         update_tray_icon('ready')
         return
 
     transcribing = True
     update_tray_icon('transcribing')
 
-    audio = np.concatenate(audio_buffer, axis=0)
+    try:
+        audio = np.concatenate(audio_buffer, axis=0)
 
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        wavfile.write(f.name, SAMPLE_RATE, audio)
-        result = model.transcribe(
-            f.name,
-            language="en",
-            temperature=0.0,
-            fp16=False
-        )
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+            wavfile.write(f.name, SAMPLE_RATE, audio)
+            result = model.transcribe(
+                f.name,
+                language="en",
+                temperature=0.0,
+                fp16=False
+            )
 
-    text = result["text"].strip()
-    pyperclip.copy(text)
+        text = result["text"].strip()
+        pyperclip.copy(text)
 
-    log("\nTranscribed text (copied to clipboard):")
-    log(text)
-    log("-" * 40)
+        log("\nTranscribed text (copied to clipboard):")
+        log(text)
+        log("-" * 40)
 
-    transcribing = False
-    update_tray_icon('ready')
+        play_sound('transcription_complete')
+    except Exception as e:
+        log(f"Transcription error: {e}")
+        play_sound('error')
+    finally:
+        transcribing = False
+        update_tray_icon('ready')
 
 
 def on_hotkey_press():
@@ -167,10 +212,10 @@ def exit_program():
 keyboard.on_press_key("space", lambda e: on_hotkey_press() if keyboard.is_pressed("ctrl") else None)
 keyboard.on_release_key("space", lambda e: on_hotkey_release())
 
-keyboard.on_press_key(EXIT_KEY, lambda e: exit_program())
+keyboard.add_hotkey(EXIT_KEY, exit_program)
 
 log("Hold Ctrl+Space to speak. Release to transcribe.")
-log("Press ESC to exit.")
+log("Press Ctrl+Shift+ESC to exit.")
 
 # ---------------- TRAY ICON SETUP ----------------
 def setup_tray():
