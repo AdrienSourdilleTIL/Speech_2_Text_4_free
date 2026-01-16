@@ -7,7 +7,8 @@ import time
 import sys
 import tempfile
 import scipy.io.wavfile as wavfile
-import pyperclip  # <-- added
+import pyperclip
+import os
 
 # ---------------- CONFIG ----------------
 MODEL_NAME = "medium"   # step 2: better accuracy
@@ -16,7 +17,15 @@ HOTKEY = "ctrl+space"
 EXIT_KEY = "esc"
 # ----------------------------------------
 
-print("Loading Whisper model...")
+# Detect if running in background mode (no console)
+BACKGROUND_MODE = not sys.stdout or not sys.stdout.isatty()
+
+def log(message):
+    """Print only if console is available."""
+    if not BACKGROUND_MODE:
+        print(message)
+
+log("Loading Whisper model...")
 model = whisper.load_model(MODEL_NAME)
 
 running = True
@@ -34,7 +43,7 @@ def record_audio():
 
     audio_buffer = []
     recording = True
-    print("Recording... Speak now!")
+    log("Recording... Speak now!")
 
     with sd.InputStream(
         samplerate=SAMPLE_RATE,
@@ -44,13 +53,13 @@ def record_audio():
         while recording and running:
             time.sleep(0.05)
 
-    print("Recording stopped. Transcribing...")
+    log("Recording stopped. Transcribing...")
     process_audio()
 
 
 def process_audio():
     if not audio_buffer:
-        print("No audio captured.")
+        log("No audio captured.")
         return
 
     audio = np.concatenate(audio_buffer, axis=0)
@@ -65,11 +74,11 @@ def process_audio():
         )
 
     text = result["text"].strip()
-    pyperclip.copy(text)  # <-- added
+    pyperclip.copy(text)
 
-    print("\nTranscribed text (copied to clipboard):")
-    print(text)
-    print("-" * 40)
+    log("\nTranscribed text (copied to clipboard):")
+    log(text)
+    log("-" * 40)
 
 
 def on_hotkey_press():
@@ -84,7 +93,7 @@ def on_hotkey_release():
 
 def exit_program():
     global running, recording
-    print("\nExiting cleanly...")
+    log("\nExiting cleanly...")
     running = False
     recording = False
     time.sleep(0.2)
@@ -97,8 +106,8 @@ keyboard.on_release_key("space", lambda e: on_hotkey_release())
 
 keyboard.on_press_key(EXIT_KEY, lambda e: exit_program())
 
-print("Hold Ctrl+Space to speak. Release to transcribe.")
-print("Press ESC to exit.")
+log("Hold Ctrl+Space to speak. Release to transcribe.")
+log("Press ESC to exit.")
 
 # ---------------- MAIN LOOP ----------------
 while running:

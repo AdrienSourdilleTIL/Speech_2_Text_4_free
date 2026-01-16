@@ -1,0 +1,83 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Important
+
+Always update README.md and CLAUDE.md when making significant changes to the codebase.
+
+## Project Overview
+
+Speech_2_Text_4_free is a hotkey-activated speech-to-text application using OpenAI's Whisper model. Users hold Ctrl+Space to record audio, release to transcribe, and the transcribed text is automatically copied to the clipboard.
+
+## Running the Application
+
+```bash
+# With console (for debugging)
+.venv\Scripts\activate
+python hotkey_whisper.py
+
+# Background mode (no window) - double-click or run:
+start_silent.bat
+```
+
+## Dependencies
+
+Key packages (installed in .venv):
+- `openai-whisper` - Speech recognition model
+- `sounddevice` - Audio recording
+- `keyboard` - Global hotkey detection
+- `pyperclip` - Clipboard operations
+- `scipy` - WAV file handling
+- `numpy` - Audio data processing
+- `torch` - Whisper backend
+
+## Architecture
+
+Single-file application ([hotkey_whisper.py](hotkey_whisper.py)):
+
+- **Configuration** (lines 13-17): Model name, sample rate, hotkeys
+- **Background mode detection** (line 21): Auto-detects if running with pythonw.exe
+- **Audio recording**: Uses `sounddevice.InputStream` with callback pattern, stores chunks in `audio_buffer`
+- **Transcription**: Writes audio to temp WAV file, calls Whisper's `transcribe()`, copies result to clipboard
+- **Hotkey handling**: `keyboard` library binds Ctrl+Space (record toggle) and ESC (exit)
+
+## Key Configuration Variables
+
+```python
+MODEL_NAME = "medium"   # Whisper model size (tiny, base, small, medium, large)
+SAMPLE_RATE = 16000     # Audio sample rate in Hz
+HOTKEY = "ctrl+space"   # Hold to record
+EXIT_KEY = "esc"        # Exit application
+```
+
+## Usage Pattern
+
+1. Script loads Whisper model on startup (takes several seconds)
+2. Hold Ctrl+Space to start recording
+3. Release to stop recording and trigger transcription
+4. Transcribed text is printed and copied to clipboard
+5. Press ESC to exit cleanly
+
+## Project Goal
+
+Create a lightweight, local, always-ready speech-to-text assistant ("SuperWhisperer") with silent background operation.
+
+## Current Status
+
+**Completed:**
+- Ctrl+Space hold-to-record, release-to-transcribe
+- Clipboard auto-copy of transcribed text
+- ESC graceful exit
+- Virtual environment with all dependencies
+- FFmpeg installed and working
+- Background/silent execution via `start_silent.bat`
+
+**Roadmap:**
+1. ~~Basic recording + transcription~~ (done)
+2. ~~Clipboard integration~~ (done)
+3. ~~Graceful exit~~ (done)
+4. ~~Background/silent execution~~ (done) - `start_silent.bat` uses pythonw.exe
+5. **Next: System tray icon** with quit/status
+6. Standalone packaging (PyInstaller) or global dependency install
+7. Optional: Pre-roll listening, latency optimizations, logging
