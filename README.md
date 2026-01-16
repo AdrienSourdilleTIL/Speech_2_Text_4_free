@@ -15,11 +15,37 @@ A lightweight, local speech-to-text assistant using OpenAI's Whisper model. Hold
 
 ## Requirements
 
-- Python 3.x
-- FFmpeg (must be installed and in PATH)
-- Windows (uses `keyboard` library for global hotkeys)
+- Python 3.8+
+- FFmpeg
+- Windows 10/11
 
 ## Installation
+
+### 1. Install FFmpeg
+
+FFmpeg is required for audio processing. Choose one method:
+
+**Option A: Using winget (recommended)**
+```bash
+winget install FFmpeg
+```
+
+**Option B: Using Chocolatey**
+```bash
+choco install ffmpeg
+```
+
+**Option C: Manual installation**
+1. Download from https://ffmpeg.org/download.html
+2. Extract to `C:\ffmpeg`
+3. Add `C:\ffmpeg\bin` to your system PATH
+
+Verify installation:
+```bash
+ffmpeg -version
+```
+
+### 2. Install Speech2Text
 
 ```bash
 # Clone the repository
@@ -31,7 +57,7 @@ python -m venv .venv
 .venv\Scripts\activate
 
 # Install dependencies
-pip install openai-whisper sounddevice keyboard pyperclip scipy numpy pystray pillow
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -57,6 +83,18 @@ Double-click `start_silent.bat` or run it from command line.
 - **Green**: Ready
 - **Red**: Recording
 - **Orange**: Transcribing
+
+### Auto-start with Windows
+
+To start Speech2Text automatically when you log in:
+```bash
+install_autostart.bat
+```
+
+To remove from startup:
+```bash
+remove_autostart.bat
+```
 
 ## Configuration
 

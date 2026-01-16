@@ -8,7 +8,6 @@ import sys
 import tempfile
 import scipy.io.wavfile as wavfile
 import pyperclip
-import os
 from PIL import Image, ImageDraw
 import pystray
 import winsound
@@ -30,18 +29,6 @@ def log(message):
         print(message)
 
 # ---------------- SOUND FEEDBACK ----------------
-SOUND_SAMPLE_RATE = 44100
-
-def generate_tone(frequency, duration, volume=0.3):
-    """Generate a simple sine wave tone."""
-    t = np.linspace(0, duration, int(SOUND_SAMPLE_RATE * duration), False)
-    tone = np.sin(2 * np.pi * frequency * t) * volume
-    # Apply fade in/out to avoid clicks
-    fade_samples = int(SOUND_SAMPLE_RATE * 0.01)
-    tone[:fade_samples] *= np.linspace(0, 1, fade_samples)
-    tone[-fade_samples:] *= np.linspace(1, 0, fade_samples)
-    return tone.astype(np.float32)
-
 def play_sound(sound_type):
     """Play a sound based on type. Uses Windows system sounds."""
     if not SOUND_ENABLED:
